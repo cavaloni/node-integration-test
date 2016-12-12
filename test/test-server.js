@@ -96,3 +96,75 @@ describe('Shopping List', function() {
       done();
   });
 });
+
+describe ('Recipes List', function () {
+  
+  it('should list items on GET', function (done) {
+   chai.request(server)
+    .get('/recipes')
+    .end(function(err, res) {
+      res.should.have.status(200);
+      res.should.be.json;
+      res.body.should.be.a('array');
+      res.body.length.should.be.at.least(1);
+      const expectedKeys = ['id', 'name', 'ingredients'];
+      res.body.forEach(function (item){
+        item.should.be.a('object');
+        item.should.include.keys(expectedKeys);
+      });
+      done();
+    }); 
+  });
+
+  it('should add an item on POST', function (done) {
+    const newItem = {name: 'Butt Bread', ingredients: ['foot', 'stink', 'bread']};
+    chai.request(server)
+      .post('/recipes')
+      .send(newItem)
+      .end(function (err, res) {
+        res.should.have.status(201);
+        res.should.be.json;
+        res.body.should.be.a('object');
+        res.body.should.include.keys('name', 'id', 'ingredients');
+        res.body.id.should.not.be.null;
+        res.body.should.deep.equal(Object.assign(newItem, {id: res.body.id}));
+      });
+      done();
+  })
+
+  it('should update items on PUT', function (done) {
+    chai.request(server)
+      .get('.recipes')
+      .end(function(err, res){
+        const updated = {
+          name: 'foo',
+          ingredients: ['more foo', 'more', 'less'],
+          id: res.body[0].id
+        };
+        chai.request(server)
+          .put(`/recipes/${res.body[0].id}`)
+          .send(updated)
+          .end(function(err, res) {
+            res.should.have.status(200);
+            res.should.be.json;
+            res.body.should.be.a('object');
+            res.body.should.deep.equal(updated);
+          });
+      })
+      done();
+  });
+
+  it('should delete items on DELETE', function (done) {
+    chai.request(server)
+      .get('recipes')
+      .end(function(err, res) {
+        chai.request(server)
+        .delete(`/recipes/${res.body[0].id}`)
+        .end(function(err, res) {
+          res.should.have.status(204);
+        });
+      })
+      done();
+  });
+
+});
